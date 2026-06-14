@@ -1,0 +1,24 @@
+{
+  "name": "research-paper",
+  "version": "1.0.0",
+  "description": "This package contains a complete IEEE-format research paper with real implementation and experimental results.",
+  "main": "generate_paper.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/namrathar-18/research-paper.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/namrathar-18/research-paper/issues"
+  },
+  "homepage": "https://github.com/namrathar-18/research-paper#readme",
+  "dependencies": {
+    "docx": "^9.7.1"
+  }
+}

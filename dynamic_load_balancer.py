@@ -6,6 +6,7 @@ Author: Research Implementation
 Dataset: Google Cluster Trace (Real Production Data)
 """
 
+import os
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -375,7 +376,7 @@ def generate_performance_graphs(results, save_path):
         results['round_robin']['costs'],
         results['least_connection']['costs']
     ]
-    bp1 = ax1.boxplot(costs_data, labels=algorithms, patch_artist=True)
+    bp1 = ax1.boxplot(costs_data, tick_labels=algorithms, patch_artist=True)
     for patch, color in zip(bp1['boxes'], colors):
         patch.set_facecolor(color)
         patch.set_alpha(0.7)
@@ -390,7 +391,7 @@ def generate_performance_graphs(results, save_path):
         np.array(results['round_robin']['times']) * 1000,
         np.array(results['least_connection']['times']) * 1000
     ]
-    bp2 = ax2.boxplot(times_data, labels=algorithms, patch_artist=True)
+    bp2 = ax2.boxplot(times_data, tick_labels=algorithms, patch_artist=True)
     for patch, color in zip(bp2['boxes'], colors):
         patch.set_facecolor(color)
         patch.set_alpha(0.7)
@@ -405,7 +406,7 @@ def generate_performance_graphs(results, save_path):
         results['round_robin']['load_variance'],
         results['least_connection']['load_variance']
     ]
-    bp3 = ax3.boxplot(variance_data, labels=algorithms, patch_artist=True)
+    bp3 = ax3.boxplot(variance_data, tick_labels=algorithms, patch_artist=True)
     for patch, color in zip(bp3['boxes'], colors):
         patch.set_facecolor(color)
         patch.set_alpha(0.7)
@@ -568,7 +569,7 @@ if __name__ == "__main__":
     )
     
     # Generate all graphs and tables
-    save_path = '/home/claude/research_paper/results'
+    save_path = os.path.dirname(os.path.abspath(__file__))
     
     print("\n" + "="*70)
     print("Generating Performance Graphs...")

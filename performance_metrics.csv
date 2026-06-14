@@ -1,4 +1,6 @@
-Algorithm,Mean Cost ($),Std Dev Cost,Mean Time (ms),Load Variance
-Proposed,1532.05,94.85,12.64,0.0000
-Round Robin,1593.49,104.44,2.29,0.2222
-Least Connection,1593.49,104.44,5.38,0.2222
+Algorithm,Mean Cost ($),Std Dev ($),Mean Time (ms),Load Variance
+CODLB,1480.95,82.96,29.75,0.005641
+Round Robin,1584.90,93.22,2.81,0.001830
+Least Connection,1584.90,93.22,3.39,0.001830
+Min-Min,1587.10,95.13,7.36,0.000004
+Greedy Cost,1480.34,82.94,7.57,0.044569

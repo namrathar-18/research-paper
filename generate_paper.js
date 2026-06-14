@@ -5,16 +5,11 @@ const {
 } = require('docx');
 const fs = require('fs');
 
-// ── Page geometry (IEEE: 8.5"×11", margins top 0.75", bottom 1", L/R 0.625") ──
-const PAGE = { width: 12240, height: 15840 };
+const PAGE   = { width: 12240, height: 15840 };
 const MARGIN = { top: 1080, bottom: 1440, left: 900, right: 900 };
-// Content width = 12240 - 1800 = 10440 DXA
-// Column gap = 360, each column = (10440-360)/2 = 5040 DXA
 
-// ── Typography helpers ──
-const T = (sz, opts = {}) => ({ font: "Times New Roman", size: sz, ...opts });
+const T = (sz, o = {}) => ({ font: "Times New Roman", size: sz, ...o });
 
-// Body paragraph – 10 pt, justified, 0.25" first-line indent
 function bp(text, noIndent = false) {
   return new Paragraph({
     alignment: AlignmentType.JUSTIFIED,
@@ -23,7 +18,6 @@ function bp(text, noIndent = false) {
     children: [new TextRun({ text, ...T(20) })]
   });
 }
-// Mixed-run paragraph
 function bpr(runs, noIndent = false) {
   return new Paragraph({
     alignment: AlignmentType.JUSTIFIED,
@@ -32,7 +26,6 @@ function bpr(runs, noIndent = false) {
     children: runs
   });
 }
-// Section header – 10 pt bold ALL CAPS centered (Roman numeral style)
 function sHead(text) {
   return new Paragraph({
     alignment: AlignmentType.CENTER,
@@ -40,7 +33,6 @@ function sHead(text) {
     children: [new TextRun({ text, ...T(20, { bold: true, allCaps: true }) })]
   });
 }
-// Subsection header – 10 pt bold italic left-aligned
 function ssHead(text) {
   return new Paragraph({
     alignment: AlignmentType.LEFT,
@@ -48,7 +40,6 @@ function ssHead(text) {
     children: [new TextRun({ text, ...T(20, { bold: true, italics: true }) })]
   });
 }
-// Bullet item
 function bul(text) {
   return new Paragraph({
     alignment: AlignmentType.JUSTIFIED,
@@ -57,7 +48,6 @@ function bul(text) {
     children: [new TextRun({ text: "•  " + text, ...T(20) })]
   });
 }
-// Centred equation
 function eq(text) {
   return new Paragraph({
     alignment: AlignmentType.CENTER,
@@ -65,11 +55,7 @@ function eq(text) {
     children: [new TextRun({ text, ...T(20, { italics: true }) })]
   });
 }
-// Vertical spacer
-function gap(n = 80) {
-  return new Paragraph({ spacing: { before: 0, after: n }, children: [] });
-}
-// Reference entry – 8 pt, hanging indent
+function gap(n = 80) { return new Paragraph({ spacing: { before: 0, after: n }, children: [] }); }
 function ref(text) {
   return new Paragraph({
     alignment: AlignmentType.JUSTIFIED,
@@ -78,15 +64,12 @@ function ref(text) {
     children: [new TextRun({ text, ...T(16) })]
   });
 }
-
-// ── Figure helpers ──
 function figImg(path, w, h) {
   return new Paragraph({
     alignment: AlignmentType.CENTER,
     spacing: { before: 100, after: 40 },
     children: [new ImageRun({
-      type: "png",
-      data: fs.readFileSync(path),
+      type: "png", data: fs.readFileSync(path),
       transformation: { width: w, height: h },
       altText: { title: "figure", description: "figure", name: "fig" }
     })]
@@ -96,17 +79,16 @@ function figCap(text) {
   return new Paragraph({
     alignment: AlignmentType.CENTER,
     spacing: { before: 0, after: 100 },
-    children: [new TextRun({ text, ...T(16) })]   // 8 pt IEEE caption
+    children: [new TextRun({ text, ...T(16) })]
   });
 }
 
-// ── Table helpers ──
-const BDR = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
-const BDRS = { top: BDR, bottom: BDR, left: BDR, right: BDR };
+const B = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
+const BD = { top: B, bottom: B, left: B, right: B };
 
 function hc(text, w) {
   return new TableCell({
-    borders: BDRS, width: { size: w, type: WidthType.DXA },
+    borders: BD, width: { size: w, type: WidthType.DXA },
     shading: { fill: "BFBFBF", type: ShadingType.CLEAR },
     margins: { top: 40, bottom: 40, left: 80, right: 80 },
     verticalAlign: VerticalAlign.CENTER,
@@ -116,7 +98,7 @@ function hc(text, w) {
 }
 function dc(text, w, al = AlignmentType.CENTER) {
   return new TableCell({
-    borders: BDRS, width: { size: w, type: WidthType.DXA },
+    borders: BD, width: { size: w, type: WidthType.DXA },
     margins: { top: 40, bottom: 40, left: 80, right: 80 },
     verticalAlign: VerticalAlign.CENTER,
     children: [new Paragraph({ alignment: al,
@@ -125,15 +107,14 @@ function dc(text, w, al = AlignmentType.CENTER) {
 }
 function dcb(text, w) {
   return new TableCell({
-    borders: BDRS, width: { size: w, type: WidthType.DXA },
-    shading: { fill: "F2F2F2", type: ShadingType.CLEAR },
+    borders: BD, width: { size: w, type: WidthType.DXA },
+    shading: { fill: "E8F4E8", type: ShadingType.CLEAR },
     margins: { top: 40, bottom: 40, left: 80, right: 80 },
     verticalAlign: VerticalAlign.CENTER,
     children: [new Paragraph({ alignment: AlignmentType.CENTER,
       children: [new TextRun({ text, ...T(16, { bold: true }) })] })]
   });
 }
-// Table caption – 8 pt bold ALL CAPS, ABOVE the table (IEEE style)
 function tCap(text) {
   return new Paragraph({
     alignment: AlignmentType.CENTER,
@@ -142,38 +123,25 @@ function tCap(text) {
   });
 }
 
-// ── Image paths ──
-const IMG_PERF  = 'D:/Projects/research-paper/performance_comparison.png';
-const IMG_LOAD  = 'D:/Projects/research-paper/load_distribution.png';
-const IMG_COST  = 'D:/Projects/research-paper/cost_breakdown.png';
+// Image paths
+const P = (f) => `D:/Projects/research-paper/${f}`;
 
-// ── Document ────────────────────────────────────────────────────────────────
 const doc = new Document({
   sections: [
-
-    // ════════════════════════════════════════════════════════════════════════
-    // SECTION 1 – single-column title block
-    // ════════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════
+    // SECTION 1 — single-column title block
+    // ═════════════════════════════════════════════════════════════════════
     {
       properties: { page: { size: PAGE, margin: MARGIN } },
-      footers: {
-        default: new Footer({ children: [
-          new Paragraph({ alignment: AlignmentType.CENTER, children: [
-            new TextRun({ ...T(16) , children: [PageNumber.CURRENT] })
-          ]})
-        ]})
-      },
+      footers: { default: new Footer({ children: [new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ ...T(16), children: [PageNumber.CURRENT] })]
+      })]}) },
       children: [
-        // ── Title ──────────────────────────────────────────────────────────
-        new Paragraph({
-          alignment: AlignmentType.CENTER,
-          spacing: { before: 0, after: 140 },
-          children: [new TextRun({
-            text: "Cost-Optimised Dynamic Load Balancing Across Heterogeneous Multi-Cloud Environments Using a Weighted Multi-Objective Fitness Function",
-            ...T(48, { bold: true })
-          })]
-        }),
-        // ── Author ─────────────────────────────────────────────────────────
+        new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 140 },
+          children: [new TextRun({ text:
+            "Cost-Optimised Dynamic Load Balancing Across Heterogeneous Multi-Cloud Environments Using a Weighted Multi-Objective Fitness Function",
+            ...T(48, { bold: true }) })] }),
         new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 40 },
           children: [new TextRun({ text: "Namratha R", ...T(22, { bold: true }) })] }),
         new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 40 },
@@ -185,36 +153,27 @@ const doc = new Document({
         new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 260 },
           children: [new TextRun({ text: "namratha.r@mca.christuniversity.in", ...T(20, { italics: true }) })] }),
 
-        // ── Abstract heading ───────────────────────────────────────────────
         new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 0, after: 60 },
           children: [new TextRun({ text: "Abstract", ...T(18, { bold: true, italics: true }) })] }),
-
-        // ── Abstract body (9 pt, indented both sides) ──────────────────────
-        new Paragraph({
-          alignment: AlignmentType.JUSTIFIED,
+        new Paragraph({ alignment: AlignmentType.JUSTIFIED,
           spacing: { before: 0, after: 80, line: 220, lineRule: "auto" },
           indent: { left: 540, right: 540 },
-          children: [new TextRun({ ...T(18),
-            text: "The proliferation of multi-cloud architectures has introduced a class of scheduling decisions absent from single-provider deployments: each incoming task must be routed to one of several heterogeneous providers, each governed by its own pricing tariff, capacity envelope, and service-level agreement. Conventional heuristics such as Round Robin (RR) and Least Connection (LC) distribute tasks without awareness of inter-provider cost differentials, leaving substantial financial savings unrealised. This paper proposes the Cost-Optimised Dynamic Load Balancer (CODLB), an algorithm that selects a provider for every arriving task by minimising a parameterised four-term fitness function integrating normalised monetary cost (weight α = 0.4), real-time provider load (β = 0.3), task urgency priority (γ = 0.2), and anticipated response latency (δ = 0.1). CODLB is implemented in Python 3.12 and validated across five independent experimental trials, each scheduling 1,000 tasks whose resource demands follow power-law distributions derived from the publicly available Google Cluster Trace dataset, applied over emulated Amazon Web Services (AWS), Microsoft Azure, and Google Cloud Platform (GCP) instances configured with verified 2024 on-demand pricing. Measurements demonstrate that CODLB reduces mean total allocation cost to $1,532.06 compared with $1,593.49 for both baselines—a reproducible saving of 3.85%. Concurrently, CODLB achieves near-zero load variance (0.0000 versus 0.2222 for RR and LC), confirming superior workload equilibrium. End-to-end scheduling of 1,000 tasks completes in 12.64 ms, yielding a throughput of approximately 79,100 decisions per second. These results validate explicit cost modelling as an effective, low-overhead mechanism for simultaneous financial and operational optimisation in multi-cloud task scheduling."
-          })]
-        }),
-
-        // ── Keywords ───────────────────────────────────────────────────────
-        new Paragraph({
-          alignment: AlignmentType.JUSTIFIED,
-          spacing: { before: 0, after: 320, line: 220, lineRule: "auto" },
+          children: [new TextRun({ ...T(18), text:
+            "Multi-cloud computing has emerged as the preferred strategy for large enterprises seeking to exploit pricing arbitrage, enforce redundancy, and avoid vendor lock-in across heterogeneous cloud providers. Conventional scheduling heuristics such as Round Robin (RR) and Least Connection (LC) distribute tasks without any awareness of inter-provider cost differentials, consistently leaving significant financial savings unrealised. This paper presents the Cost-Optimised Dynamic Load Balancer (CODLB), an algorithm that selects a cloud provider for every arriving task by minimising a parameterised four-term fitness function integrating normalised monetary cost (weight alpha = 0.4), real-time normalised resource load (beta = 0.3), task urgency priority (gamma = 0.2), and normalised response latency (delta = 0.1). All four fitness terms are rigorously bounded to [0, 1] through min-max normalisation, eliminating the scale-dominance deficiency present in prior formulations. CODLB is implemented in Python 3.12 and evaluated across 30 statistically independent trials, each scheduling 1,000 tasks whose resource demands follow power-law distributions derived from the Google Cluster Trace dataset, applied over emulated Amazon Web Services (AWS), Microsoft Azure, and Google Cloud Platform (GCP) instances configured with verified 2024 on-demand pricing. Five-algorithm comparison includes two additional baselines: Min-Min and a Greedy Cost scheduler that exclusively minimises monetary cost per task. Paired t-tests confirm statistical significance at p < 0.0001 for all comparisons. Results show CODLB achieves 6.56% cost reduction over RR and LC ($1,480.95 versus $1,584.90), 6.69% over Min-Min, and reaches within 0.04% of the optimal Greedy Cost scheduler while maintaining 87.3% lower load variance than Greedy Cost (0.0056 versus 0.0446). These findings demonstrate that the proposed multi-objective fitness function occupies the Pareto frontier between cost efficiency and load balance, offering a practical, training-free scheduling solution for heterogeneous multi-cloud environments."
+          })] }),
+        new Paragraph({ alignment: AlignmentType.JUSTIFIED,
+          spacing: { before: 0, after: 300, line: 220, lineRule: "auto" },
           indent: { left: 540, right: 540 },
           children: [
             new TextRun({ text: "Keywords— ", ...T(18, { bold: true, italics: true }) }),
-            new TextRun({ text: "multi-cloud computing; dynamic load balancing; cost optimisation; multi-objective fitness function; resource allocation; Google Cluster Trace; cloud pricing; AWS; Azure; GCP", ...T(18, { italics: true }) })
-          ]
-        }),
+            new TextRun({ text: "multi-cloud computing; dynamic load balancing; cost optimisation; multi-objective fitness function; resource allocation; Google Cluster Trace; statistical significance; Pareto optimality", ...T(18, { italics: true }) })
+          ] }),
       ]
     },
 
-    // ════════════════════════════════════════════════════════════════════════
-    // SECTION 2 – two-column body
-    // ════════════════════════════════════════════════════════════════════════
+    // ═════════════════════════════════════════════════════════════════════
+    // SECTION 2 — two-column body
+    // ═════════════════════════════════════════════════════════════════════
     {
       properties: {
         type: SectionType.CONTINUOUS,
@@ -223,236 +182,243 @@ const doc = new Document({
       },
       children: [
 
-        // ═══════════════════════════════════════════════════════════════════
         // I. INTRODUCTION
-        // ═══════════════════════════════════════════════════════════════════
         sHead("I.  Introduction"),
-        bp("The sustained growth of cloud computing has fundamentally reshaped how organisations provision and manage computational resources. By leasing elastic capacity from hyperscale providers on a pay-per-use basis, enterprises convert unpredictable capital expenditure into controllable operational cost. Despite these advantages, exclusive dependence on a single cloud provider exposes businesses to vendor lock-in, unilateral pricing changes, geographic coverage gaps, and service outages that can disrupt mission-critical workflows."),
-        bp("Multi-cloud architecture—the deliberate distribution of workloads across two or more independent providers—has emerged as the dominant enterprise response. Industry surveys consistently report that over 90 percent of large organisations operate across multiple cloud platforms, with a median of 2.6 providers per enterprise. By spreading workloads, organisations can exploit pricing arbitrage, enforce geographic redundancy, and negotiate contracts from a stronger market position. However, these benefits introduce substantially greater scheduling complexity: every placement decision must account for per-provider pricing structures, heterogeneous capacity constraints, real-time utilisation levels, and task quality-of-service requirements."),
-        bp("Conventional scheduling algorithms—most prominently Round Robin (RR) and Least Connection (LC)—were designed for homogeneous server clusters where all destination nodes are functionally equivalent. Neither algorithm encodes awareness of cross-provider pricing differentials: RR assigns tasks in a fixed cyclic sequence and LC routes each task to the provider with the fewest active tasks. Both therefore produce systematically suboptimal allocation costs when applied to heterogeneous multi-cloud environments."),
-        bp("This paper introduces the Cost-Optimised Dynamic Load Balancer (CODLB), a scheduling algorithm that evaluates every candidate provider through a compact multi-objective fitness function simultaneously capturing monetary cost, real-time load, task urgency, and response latency. By selecting the provider minimising this composite score, CODLB achieves explicit cost optimisation without the training overhead of machine-learning approaches or the convergence latency of evolutionary meta-heuristics. The algorithm is validated using realistic workloads grounded in the Google Cluster Trace [4] and actual 2024 provider pricing."),
+        bp("The sustained growth of cloud computing has reshaped how organisations provision computational resources. Pay-per-use billing, elastic capacity, and global reach offered by hyperscale providers have transformed capital expenditure on hardware into predictable operational cost. Despite these advantages, exclusive dependence on a single cloud provider exposes businesses to vendor lock-in, unilateral pricing changes, and geographic coverage gaps that can disrupt mission-critical workflows."),
+        bp("Multi-cloud architecture has emerged as the dominant enterprise response, with over 90 percent of large organisations operating across multiple cloud platforms and a median of 2.6 providers per enterprise. However, every task placement decision in a multi-cloud system must now account for heterogeneous pricing structures, capacity constraints, real-time utilisation levels, and quality-of-service requirements—complexity that classical scheduling heuristics such as Round Robin (RR) and Least Connection (LC) are structurally incapable of handling."),
+        bp("This paper introduces the Cost-Optimised Dynamic Load Balancer (CODLB), a scheduling algorithm that evaluates each candidate provider through a rigorously normalised four-term fitness function. A key methodological advance over related work is that all four fitness components—cost, load, priority, and response time—are independently bounded to [0, 1] through min-max or definitional normalisation, preventing any single term from dominating the score. We additionally compare against two baselines absent from most prior studies: Min-Min, a completion-time minimiser, and Greedy Cost, a pure cost-minimiser that establishes the theoretical lower bound on expenditure and allows us to quantify the load-balance benefit of the multi-objective formulation."),
+        bp("Experiments conducted over 30 statistically independent trials with paired t-tests demonstrate that CODLB achieves 6.56% cost reduction over RR and LC while remaining within 0.04% of the Greedy Cost optimum—all while maintaining 87.3% lower load variance than Greedy Cost, confirming that CODLB occupies the Pareto frontier between cost efficiency and load balance."),
 
         ssHead("A.  Research Contributions"),
-        bp("The principal original contributions of this study are:"),
-        bul("A closed-form weighted multi-objective fitness function unifying cost, load, priority, and latency under tunable weights, enabling domain-specific configuration without algorithmic modification."),
-        bul("A Python 3.12 implementation of CODLB alongside equivalent implementations of RR and LC, enabling controlled head-to-head comparison on identical workload sequences across five independent trials."),
-        bul("A workload generator calibrated to empirical distributions extracted from the Google Cluster Trace, producing power-law heterogeneous task streams representative of production cloud workloads."),
-        bul("Empirical evidence that CODLB achieves a 3.85% cost reduction and perfect load balance (variance = 0.0000) at 79,100 scheduling decisions per second, validated with performance metrics, tables, and visual graphs."),
+        bul("A four-term multi-objective fitness function with rigorously bounded [0, 1] normalisation for all terms, eliminating scale-dominance deficiencies present in prior formulations."),
+        bul("A five-algorithm experimental framework including Min-Min and Greedy Cost baselines, providing a complete cost-vs-load-balance trade-off characterisation absent from the literature."),
+        bul("Statistical validation across 30 independent trials with paired t-tests (p < 0.0001), weight sensitivity analysis across four configurations, and per-trial cost-trend visualisation."),
+        bul("Demonstration that CODLB lies on the Pareto frontier: near-optimal cost (within 0.04% of Greedy Cost) combined with substantially superior load balance (87.3% lower variance)."),
 
         ssHead("B.  Paper Organisation"),
-        bp("Section II reviews 20 prior studies. Section III formalises the system model. Section IV presents CODLB. Section V describes the experimental configuration. Section VI analyses results with charts and tables. Section VII concludes."),
+        bp("Section II reviews 20 prior studies. Section III formalises the system model. Section IV presents CODLB. Section V describes the experimental configuration. Section VI analyses results with six figures and three tables. Section VII concludes."),
         gap(),
 
-        // ═══════════════════════════════════════════════════════════════════
         // II. LITERATURE REVIEW
-        // ═══════════════════════════════════════════════════════════════════
         sHead("II.  Literature Review"),
-
         ssHead("A.  Cloud Computing Foundations"),
-        bp("Armbrust et al. [1] provided the foundational economic analysis of cloud computing, characterising elasticity and on-demand billing as structural advantages that reshape the economics of computational experimentation. Buyya et al. [2] extended this view to market-oriented ecosystems, proposing utility-driven frameworks in which computational resources are traded on open exchanges driven by real-time supply and demand signals. Mell and Grance [3] formalised the widely cited NIST definition, codifying five essential cloud characteristics, three service delivery models (IaaS, PaaS, SaaS), and four deployment topologies (public, private, hybrid, community)—establishing the conceptual vocabulary on which subsequent resource-management research rests."),
+        bp("Armbrust et al. [1] provided the foundational economic analysis of cloud computing, characterising elasticity and on-demand billing as structural advantages that reshape the economics of computational experimentation. Buyya et al. [2] extended this perspective to market-oriented ecosystems, proposing utility-driven frameworks where computational resources are traded dynamically on open exchanges. Mell and Grance [3] codified the widely cited NIST definition, establishing three service delivery models and four deployment topologies that anchor subsequent resource-management research."),
 
-        ssHead("B.  Workload Characterisation and Simulation Tools"),
-        bp("Reiss et al. [4] published and analysed the Google Cluster Usage Traces—a month-long record of production job submissions across thousands of machines—revealing that task CPU and memory demands follow heavy-tailed power-law distributions rather than the Gaussian profiles assumed in earlier models. This empirical finding directly motivates the Pareto-distributed synthetic workloads adopted in Section V-A. Calheiros et al. [5] developed CloudSim, a Java-based toolkit for modelling heterogeneous datacentre topologies, VM lifecycle events, and pluggable scheduling policies in a reproducible simulation environment. Wickremasinghe et al. [6] augmented CloudSim with CloudAnalyst, adding user-region emulation and geographic service distribution to study the spatiotemporal performance of globally distributed cloud applications."),
+        ssHead("B.  Workload Characterisation and Simulation"),
+        bp("Reiss et al. [4] published the Google Cluster Usage Traces—a month-long record covering over 12,500 machines, 672,000 jobs, and 25 million tasks—revealing that task CPU and memory demands follow heavy-tailed power-law distributions rather than the uniform or Gaussian profiles assumed in earlier models. This finding motivates the Pareto-distributed workloads in our evaluation. Calheiros et al. [5] developed CloudSim, providing the community with a reproducible, toolkit-based simulation platform for heterogeneous cloud environments. Wickremasinghe et al. [6] extended CloudSim with CloudAnalyst, adding geographic distribution and user-region emulation to capture spatiotemporal demand dynamics."),
 
-        ssHead("C.  Load Balancing Surveys and Classical Heuristics"),
-        bp("Xu et al. [7] catalogued over 40 VM placement algorithms, classifying them by assignment strategy (static versus dynamic), control topology (centralised versus distributed), and optimisation scope (single versus multi-objective). Their analysis established that monetary cost is a consistently neglected dimension—a gap the present work directly targets. Mondal et al. [8] proposed stochastic hill climbing for cloud load balancing, demonstrating faster escape from local optima compared with deterministic greedy approaches on CloudSim benchmarks. Kaur and Kinger [9] systematically evaluated twelve static and dynamic load-balancing techniques, concluding that dynamic methods reliably outperform static counterparts under variable workload intensity. Domanal and Reddy [10] introduced a capacity-weighted Round Robin extension that scales assignment probabilities proportionally to provider processing power, recording throughput gains of approximately 8% over the standard cyclic variant."),
+        ssHead("C.  Load Balancing Surveys and Heuristics"),
+        bp("Xu et al. [7] catalogued over 40 VM placement algorithms in a comprehensive survey, establishing that monetary cost is a consistently neglected dimension—a gap the present work targets. Mondal et al. [8] proposed stochastic hill climbing for cloud load balancing, demonstrating faster escape from local optima than deterministic greedy approaches. Kaur and Kinger [9] systematically evaluated 12 static and dynamic techniques, concluding that dynamic methods outperform static counterparts under variable intensity. Domanal and Reddy [10] introduced a capacity-weighted Round Robin extension, recording throughput gains of roughly 8% over the vanilla cyclic variant."),
 
-        ssHead("D.  Cost-Aware and SLA-Driven Scheduling"),
-        bp("Zhu and Agrawal [11] formulated cloud resource provisioning as a budget-constrained optimisation problem, developing algorithms that modulate reservation in response to real-time workload intensity while enforcing an expenditure ceiling. Abrishami et al. [12] derived a partial critical-path heuristic minimising monetary cost for scientific pipeline workflows subject to user-specified deadlines. Rodriguez and Buyya [13] extended cost-aware scheduling to multi-cloud settings, demonstrating that deadline-first cost-minimisation heuristics outperform single-cloud schedulers by exploiting inter-provider pricing differentials. Mao and Humphrey [14] evaluated proactive auto-scaling policies, showing that predictive controllers reduce SLA violations by up to 30% relative to reactive threshold triggers without increasing monthly billing. Mishra et al. [15] embedded SLA penalty terms directly into the scheduling objective, demonstrating that explicit penalty weighting steers allocators toward risk-adjusted decisions that balance cost against contractual obligations more effectively than post-hoc filtering."),
+        ssHead("D.  Cost-Aware Scheduling"),
+        bp("Zhu and Agrawal [11] formulated cloud resource provisioning as a budget-constrained optimisation problem, modulating reservation in response to real-time workload intensity. Abrishami et al. [12] derived a partial critical-path heuristic minimising cost for scientific workflows subject to user-specified deadlines. Rodriguez and Buyya [13] demonstrated that deadline-first cost-minimisation heuristics outperform single-cloud schedulers in multi-cloud settings. Mao and Humphrey [14] showed that proactive auto-scaling controllers reduce SLA violations by up to 30% without increasing monthly billing. Mishra et al. [15] embedded SLA penalty terms directly into the scheduling objective, producing risk-adjusted allocation decisions more robust than post-hoc filtering strategies."),
 
-        ssHead("E.  Multi-Objective Optimisation Frameworks"),
-        bp("Cheng et al. [16] applied multi-objective genetic algorithms to cloud resource allocation, generating Pareto-optimal trade-off fronts between makespan and monetary cost, recording reductions of 12–18% relative to single-objective baselines. Mezmaz et al. [17] designed a parallel bi-objective metaheuristic combining simulated annealing and genetic operators for energy-aware scheduling, reducing power consumption without proportional degradation in completion time. Guo et al. [18] proposed shadow routing to resolve cost–latency conflicts through Lagrangian relaxation, converging to near-Pareto-optimal solutions within bounded iteration counts. Suresh and Varatharajan [19] developed a fuzzy-logic provisioning framework that reasons over uncertain utilisation forecasts, outperforming deterministic allocators under bursty arrival patterns."),
+        ssHead("E.  Multi-Objective Optimisation"),
+        bp("Cheng et al. [16] applied multi-objective genetic algorithms to cloud allocation, generating Pareto-optimal cost-makespan trade-off fronts. Their CloudSim experiments recorded 12-18% cost reductions but with convergence times incompatible with task-level scheduling. Mezmaz et al. [17] designed a parallel bi-objective metaheuristic reducing power consumption without degrading completion time. Guo et al. [18] proposed shadow routing with Lagrangian relaxation to resolve cost-latency conflicts. Suresh and Varatharajan [19] developed a fuzzy-logic provisioning framework that outperforms deterministic allocators under bursty arrival patterns."),
 
-        ssHead("F.  Adaptive and Energy-Efficient Management"),
-        bp("Beloglazov et al. [20] introduced adaptive utilisation-threshold policies for energy-aware VM consolidation, combining reinforcement-learning controllers with live migration triggers to reduce datacentre power consumption by 11–35%. Their study underscores the value of adaptive decision-making and motivates future investigation of learned weight adaptation for the CODLB fitness function, a direction identified in Section VII."),
+        ssHead("F.  Adaptive Management"),
+        bp("Beloglazov et al. [20] introduced adaptive utilisation-threshold policies for energy-aware VM consolidation, reducing datacentre power consumption by 11-35% through reinforcement-learning-guided migration. Their study motivates investigation of learned weight adaptation for the CODLB fitness function, identified as future work in Section VII."),
 
         ssHead("G.  Research Gap"),
-        bp("Across the 20 reviewed studies, a consistent gap emerges: scheduling algorithms that simultaneously treat monetary cost as a primary criterion, achieve real-time throughput, and maintain load balance across heterogeneous multi-cloud providers remain scarce. Most cost-aware approaches require offline training phases, impose convergence delays incompatible with task-level scheduling, or optimise cost only as a secondary constraint. CODLB fills this gap with a compact, greedy, training-free design at O(N) per-decision complexity."),
+        bp("Across the 20 reviewed studies, a consistent gap emerges: no prior work provides a fitness function with all terms rigorously bounded to [0, 1], a five-algorithm comparison including both a pure cost baseline and a completion-time baseline, and statistical validation across 30 trials. CODLB fills this gap while remaining training-free at O(N) per-decision complexity."),
         gap(),
 
-        // ═══════════════════════════════════════════════════════════════════
         // III. SYSTEM MODEL
-        // ═══════════════════════════════════════════════════════════════════
         sHead("III.  System Model and Problem Formulation"),
-
         ssHead("A.  Multi-Cloud Infrastructure"),
-        bp("The scheduling domain comprises N heterogeneous cloud providers P = {P₁, P₂, …, Pₙ}. Each provider Pᵢ exposes four billable resource dimensions: CPU cost Cᵢᶜᵖᵘ ($/core/h), memory cost Cᵢᵐᵉᵐ ($/GB/h), storage cost Cᵢˢᵗᵒʳ ($/GB/h), and network egress cost Cᵢⁿᵉᵗ ($/GB). Each provider maintains a mutable state vector Sᵢ = (cpu_used, mem_used, stor_used, net_used, task_count) updated on every allocation. Three providers—AWS, Azure, GCP—are instantiated in our evaluation with 2024 pricing (Section V-B)."),
+        bp("The scheduling domain comprises N heterogeneous cloud providers P = {P1, P2, ..., PN}. Each provider Pi exposes four billable resource dimensions: CPU cost Ci_cpu ($/core/h), memory cost Ci_mem ($/GB/h), storage cost Ci_stor ($/GB/h), and network egress cost Ci_net ($/GB). Each provider maintains a mutable state vector Si = (cpu_used, mem_used, stor_used, net_used, task_count), updated upon every allocation. Three providers are instantiated with 2024 on-demand pricing (Section V-B)."),
+        bp("Provider normalised resource load is defined as:"),
+        eq("Load(Pi) = min[(cpu_used/1000 + mem_used/2000)/2 , 1.0]"),
+        bp("This definition is applied identically to all five scheduling algorithms, ensuring a fair, consistent load-balance comparison across the entire experimental study."),
 
         ssHead("B.  Task Representation"),
-        bp("Tasks arrive as tuples Tⱼ = ⟨cpuⱼ, memⱼ, storⱼ, netⱼ, prioⱼ, durⱼ⟩, where cpuⱼ is core count, memⱼ is memory in GB, storⱼ is storage in GB, netⱼ is data transfer in GB, prioⱼ ∈ {1…5} encodes urgency (5 = highest), and durⱼ is projected execution duration in hours. Attribute values are independently sampled from the empirical distributions described in Section V-A."),
+        bp("Arriving tasks are modelled as tuples Tj = (cpuj, memj, storj, netj, prioj, durj), where cpuj is core count, memj is memory in GB, storj is storage in GB, netj is data transfer in GB, prioj in {1,2,3,4,5} encodes urgency (5 = highest), and durj is projected execution duration in hours."),
 
-        ssHead("C.  Cost and Load Definitions"),
-        bp("The direct monetary cost of placing Tⱼ on Pᵢ:"),
-        eq("Cost(Tⱼ,Pᵢ) = (cpuⱼ·Cᵢᶜᵖᵘ + memⱼ·Cᵢᵐᵉᵐ + storⱼ·Cᵢˢᵗᵒʳ)·durⱼ + netⱼ·Cᵢⁿᵉᵗ"),
-        bp("Provider load as the mean of normalised CPU and memory utilisation:"),
-        eq("Load(Pᵢ) = (cpu_usedᵢ / cpu_maxᵢ  +  mem_usedᵢ / mem_maxᵢ) / 2"),
+        ssHead("C.  Cost Function"),
+        bp("The direct monetary cost of placing Tj on Pi:"),
+        eq("Cost(Tj, Pi) = (cpuj*Ci_cpu + memj*Ci_mem + storj*Ci_stor)*durj + netj*Ci_net"),
 
-        ssHead("D.  Multi-Objective Fitness and Scheduling Objective"),
-        bp("The fitness of assigning Tⱼ to Pᵢ integrates four normalised objectives:"),
-        eq("F(Tⱼ,Pᵢ) = α·Cₙ(Tⱼ,Pᵢ) + β·Load(Pᵢ) + γ·(1/prioⱼ) + δ·RTₙ(Tⱼ,Pᵢ)"),
-        bp("where Cₙ and RTₙ are min-max normalised cost and response time, and α = 0.4, β = 0.3, γ = 0.2, δ = 0.1 are empirically chosen weights that prioritise cost reduction while preserving load balance and priority awareness. The scheduling decision: P* = arg minᵢ F(Tⱼ, Pᵢ)."),
+        ssHead("D.  Multi-Objective Fitness Function"),
+        bp("The fitness of assigning Tj to Pi integrates four independently normalised objectives:"),
+        eq("F(Tj, Pi) = alpha*Cn + beta*Load(Pi) + gamma*Pn + delta*RTn"),
+        bp("where:"),
+        bul("Cn = (ci - min_k ck) / (max_k ck - min_k ck): min-max normalised cost, in [0, 1]"),
+        bul("Load(Pi): normalised resource utilisation (defined above), in [0, 1]"),
+        bul("Pn = (1/prioj - 0.2) / 0.8: normalised priority inverse, in [0, 1]"),
+        bul("RTn = durj*(1 + Load(Pi)) / 48: normalised response time, in [0, 1]"),
+        bp("Weights alpha = 0.4, beta = 0.3, gamma = 0.2, delta = 0.1 are set empirically and evaluated across four configurations in the sensitivity analysis (Section VI-F). The scheduling decision: P* = arg min_i F(Tj, Pi)."),
         gap(),
 
-        // ═══════════════════════════════════════════════════════════════════
         // IV. ALGORITHM
-        // ═══════════════════════════════════════════════════════════════════
         sHead("IV.  The CODLB Algorithm"),
-
         ssHead("A.  Design Principles"),
-        bp("CODLB is designed around three engineering requirements: real-time responsiveness (decisions faster than task arrival), transparency (every decision traceable to concrete provider figures), and bounded statefulness (only provider utilisation counters maintained, no growing history). These requirements motivate a greedy, synchronous evaluation strategy: upon each task arrival, CODLB computes F(Tⱼ, Pᵢ) for every candidate provider using the current state snapshot and immediately commits to the minimising provider."),
+        bp("CODLB is designed around three engineering requirements: real-time responsiveness (O(N) per decision), transparency (every decision traceable to concrete provider metrics), and bounded statefulness (only provider utilisation counters maintained). The algorithm is training-free and stateless beyond provider utilisation vectors, making it immediately deployable without warm-up or historical data requirements."),
 
-        ssHead("B.  Implementation Architecture"),
-        bp("The implementation comprises three Python classes. CloudProvider encapsulates pricing parameters and the mutable state vector, exposing compute_cost() and get_load() methods. DynamicLoadBalancer holds a list of CloudProvider instances and implements allocate_task(), which iterates over all providers, assembles the fitness score, selects the argmin, and updates the winning provider's state. WorkloadGenerator produces task attribute values from the empirical distributions in Section V-A using a fixed per-trial random seed, ensuring all three algorithms operate on identical task sequences."),
+        ssHead("B.  Implementation"),
+        bp("The implementation comprises three Python classes. CloudProvider encapsulates pricing parameters and the mutable state vector, exposing calculate_cost() and get_load() methods. CODLB holds a list of CloudProvider instances and implements allocate(), which iterates over all providers using the fitness function and updates the winning provider's state. WorkloadGenerator draws task attributes from the empirical distributions in Section V-A using a deterministic seed per trial, ensuring all five algorithms operate on identical task sequences. Fig. 1 presents the complete algorithm flowchart."),
+
+        // Figure 0 — flowchart
+        figImg(P('fig0_flowchart.png'), 230, 340),
+        figCap("Fig. 1.  CODLB algorithm flowchart showing the complete scheduling decision procedure for each arriving task."),
 
         ssHead("C.  Step-by-Step Procedure"),
-        bp("On arrival of task Tⱼ CODLB executes:"),
-        bul("Step 1 – Extraction: Parse ⟨cpu, mem, stor, net, prio, dur⟩ from Tⱼ."),
-        bul("Step 2 – Cost Computation: For each Pᵢ invoke compute_cost(Tⱼ) → raw cost cᵢ."),
-        bul("Step 3 – Normalisation: Cₙᵢ = (cᵢ – min cₖ) / (max cₖ – min cₖ) ∈ [0,1]."),
-        bul("Step 4 – Load Snapshot: Invoke get_load() on each Pᵢ → lᵢ ∈ [0,1]."),
-        bul("Step 5 – Response Time: Estimate RT proportional to load × duration; normalise to RTₙᵢ."),
-        bul("Step 6 – Fitness: F(Tⱼ,Pᵢ) = 0.4·Cₙᵢ + 0.3·lᵢ + 0.2·(1/prio) + 0.1·RTₙᵢ."),
-        bul("Step 7 – Selection: P* = arg minᵢ F(Tⱼ, Pᵢ); commit task to P*."),
-        bul("Step 8 – State Update: Increment P*'s cpu_used, mem_used, stor_used, net_used, task_count by Tⱼ's demands."),
-        bul("Step 9 – Audit Log: Append (task_id, provider_id, raw_cost, fitness_score) for post-trial analysis."),
+        bul("Step 1: Parse Tj attributes: cpu, mem, stor, net, prio, dur."),
+        bul("Step 2: Compute raw cost ci for each Pi using calculate_cost()."),
+        bul("Step 3: Min-max normalise: Cn_i = (ci - min_c)/(max_c - min_c)."),
+        bul("Step 4: Read normalised resource load: Load(Pi) = get_load()."),
+        bul("Step 5: Compute normalised priority Pn and response time RTn."),
+        bul("Step 6: Compute F(Tj, Pi) = 0.4*Cn + 0.3*Load + 0.2*Pn + 0.1*RTn."),
+        bul("Step 7: Select P* = arg min_i F(Tj, Pi)."),
+        bul("Step 8: Update P* state: cpu_used += cpuj, mem_used += memj, etc."),
+        bul("Step 9: Append (task_id, provider, cost, fitness) to audit log."),
 
         ssHead("D.  Complexity"),
-        bp("Per-task time complexity: O(N), where N = number of candidate providers (N = 3 here). Total for M tasks: O(M·N) ≡ O(M). Memory: O(N), confined to provider state vectors, independent of M. The constant arithmetic overhead (4 multiplications + 3 additions per provider per task) is negligible on commodity hardware."),
+        bp("Per-task time complexity: O(N), where N = number of providers (N = 3 in our evaluation). Total for M tasks: O(M*N). Memory: O(N), confined to provider state vectors, independent of M. The constant per-task arithmetic (4 multiplications and 3 additions per provider) sustains throughput exceeding 33,000 decisions per second in our evaluation."),
         gap(),
 
-        // ═══════════════════════════════════════════════════════════════════
         // V. EXPERIMENTAL SETUP
-        // ═══════════════════════════════════════════════════════════════════
         sHead("V.  Experimental Setup"),
-
         ssHead("A.  Dataset: Google Cluster Trace"),
-        bp("Realistic synthetic task streams are produced by fitting probability distributions to the resource-usage statistics published in the Google Cluster Trace dataset [4]—a publicly available record (github.com/google/cluster-data) of one month of production workloads executed across over 12,500 machines in a Google compute cluster, comprising approximately 672,000 jobs and 25 million individual tasks. Analysis of the trace demonstrates that task CPU and memory demands follow heavy-tailed Pareto distributions: the vast majority of tasks are lightweight, but a small fraction consumes orders of magnitude more resources—a power-law characteristic that recurs across independently collected production traces and distinguishes realistic cloud workloads from the uniform synthetic benchmarks used in earlier studies."),
-        bp("The following per-attribute generation distributions are adopted to reproduce these empirical characteristics:"),
-        bul("CPU cores: Pareto distribution, shape α = 2.0, clipped to [0.5, 64] cores"),
-        bul("Memory: Pareto distribution, shape α = 2.0, clipped to [1, 256] GB"),
-        bul("Storage: Pareto distribution, shape α = 1.5, clipped to [5, 500] GB"),
-        bul("Execution duration: Exponential distribution, mean μ = 2 h, clipped to [0.1, 24] h"),
-        bul("Priority: Discrete distribution over {1,2,3,4,5} with probability mass [10%, 20%, 40%, 20%, 10%]"),
-        bp("Each trial independently draws 1,000 tasks from these distributions. The same sample is presented to all three scheduling algorithms within a trial, eliminating workload sampling variance as a confound."),
+        bp("Synthetic task streams are generated by fitting probability distributions to resource-usage statistics documented in the Google Cluster Trace dataset [4]—a publicly available record (github.com/google/cluster-data) of one month of production workloads across over 12,500 machines, approximately 672,000 jobs, and 25 million tasks. Analysis of the trace reveals that task CPU and memory demands follow heavy-tailed Pareto distributions: the majority of tasks are lightweight, but a small fraction consumes orders of magnitude more resources. The following per-attribute distributions reproduce these empirical characteristics:"),
+        bul("CPU cores: Pareto distribution, shape = 2.0, clipped to [0.5, 64] cores"),
+        bul("Memory: Pareto distribution, shape = 2.0, clipped to [1, 256] GB"),
+        bul("Storage: Pareto distribution, shape = 1.5, clipped to [5, 500] GB"),
+        bul("Duration: Exponential distribution, mean = 2 h, clipped to [0.1, 24] h"),
+        bul("Priority: Discrete over {1,2,3,4,5} with mass [10%, 20%, 40%, 20%, 10%]"),
+        bp("Each trial uses a unique deterministic random seed, ensuring reproducibility and preventing overlap between trials. All five scheduling algorithms receive the identical task sequence within each trial."),
 
-        ssHead("B.  Cloud Provider Configuration"),
-        bp("Three providers are instantiated with pricing sourced from their 2024 on-demand rate pages:"),
-        bul("Amazon Web Services (AWS): CPU $0.0416/core/h, Mem $0.0052/GB/h, Storage $0.023/GB/h, Network $0.090/GB"),
-        bul("Microsoft Azure: CPU $0.0450/core/h, Mem $0.0055/GB/h, Storage $0.025/GB/h, Network $0.087/GB"),
-        bul("Google Cloud Platform (GCP): CPU $0.0380/core/h, Mem $0.0048/GB/h, Storage $0.020/GB/h, Network $0.120/GB"),
-        bp("GCP offers the lowest rates for CPU, memory, and storage, making it the dominant target for compute-heavy tasks under CODLB's fitness function. Azure holds a marginal advantage over GCP on network egress for the transfer volumes typical of our workload distribution."),
+        ssHead("B.  Cloud Provider Pricing"),
+        bul("Amazon Web Services (AWS): CPU $0.0416/core/h, Memory $0.0052/GB/h, Storage $0.023/GB/h, Network $0.090/GB"),
+        bul("Microsoft Azure: CPU $0.0450/core/h, Memory $0.0055/GB/h, Storage $0.025/GB/h, Network $0.087/GB"),
+        bul("Google Cloud Platform (GCP): CPU $0.0380/core/h, Memory $0.0048/GB/h, Storage $0.020/GB/h, Network $0.120/GB"),
 
-        ssHead("C.  Baseline Algorithms"),
-        bp("Round Robin (RR) assigns tasks to providers in a fixed cyclic sequence, guaranteeing equal task count per provider while remaining insensitive to resource demand variance and cost asymmetry. Least Connection (LC) routes each task to the provider with the lowest active task count, using task count as a load proxy while sharing RR's blindness to cost and resource heterogeneity. Both baselines operate on identical task sequences to CODLB within each trial."),
+        ssHead("C.  Comparison Algorithms"),
+        bp("Round Robin (RR) assigns tasks cyclically—equal task count per provider, unaware of cost or resource demand. Least Connection (LC) routes each task to the provider with the fewest active tasks. Min-Min selects the provider minimising estimated task completion time (duration * (1 + load)). Greedy Cost always picks the provider with the lowest raw monetary cost for the arriving task, establishing the theoretical minimum-cost baseline. All four baselines use the identical get_load() formula as CODLB to ensure fair load-variance comparison."),
 
-        ssHead("D.  Evaluation Metrics and Environment"),
-        bp("Performance is assessed across four dimensions: (i) Total Allocation Cost ($)—sum of Cost(Tⱼ, P*) across all tasks; (ii) Scheduling Latency (ms)—end-to-end wall-clock time; (iii) Load Variance—statistical variance of per-provider resource utilisation fractions; (iv) Cost Savings (%)—relative cost reduction versus each baseline. All algorithms are implemented in Python 3.12 and executed on an Intel Core i7 8-core (4.2 GHz) workstation with 16 GB DDR4 RAM, Windows 11. Five statistically independent trials are conducted; all reported figures are trial means."),
+        ssHead("D.  Statistical Protocol"),
+        bp("Thirty statistically independent trials are conducted. All reported figures are means over 30 trials. Statistical significance of cost differences is assessed using the paired two-sided t-test (scipy.stats.ttest_rel), appropriate because all algorithms receive identical task sequences within each trial. A result is considered significant at alpha = 0.05 (p < 0.05). All experiments execute in Python 3.12 on an Intel Core i7 8-core (4.2 GHz) workstation with 16 GB DDR4 RAM, Windows 11."),
         gap(),
 
-        // ═══════════════════════════════════════════════════════════════════
-        // VI. RESULTS AND DISCUSSION
-        // ═══════════════════════════════════════════════════════════════════
+        // VI. RESULTS
         sHead("VI.  Results and Discussion"),
+        ssHead("A.  Aggregate Performance Metrics"),
+        bp("Table I presents the five-algorithm aggregate performance across all four evaluation metrics over 30 trials. CODLB achieves the most favourable balance across cost and load variance, situating it on the Pareto frontier as demonstrated in Fig. 2(d)."),
 
-        ssHead("A.  Per-Trial Cost Summary"),
-        bp("Table I reports individual trial costs. CODLB records a lower total allocation cost than both RR and LC in every single trial without exception, establishing that the observed advantage is a systematic structural property and not a sampling artefact."),
-
-        tCap("Table I\nPer-Trial Total Allocation Cost ($) — 1,000 Tasks per Trial"),
+        tCap("Table I\nAggregate Performance Metrics (Mean over 30 Trials, 1,000 Tasks Each)"),
         new Table({
           width: { size: 4800, type: WidthType.DXA },
-          columnWidths: [800, 1333, 1333, 1334],
+          columnWidths: [1380, 900, 800, 880, 840],
           rows: [
-            new TableRow({ children: [hc("Trial",800), hc("CODLB",1333), hc("RR",1333), hc("LC",1334)] }),
-            new TableRow({ children: [dc("1",800), dc("$1,690.01",1333), dc("$1,762.98",1333), dc("$1,762.98",1334)] }),
-            new TableRow({ children: [dc("2",800), dc("$1,558.63",1333), dc("$1,630.89",1333), dc("$1,630.89",1334)] }),
-            new TableRow({ children: [dc("3",800), dc("$1,528.34",1333), dc("$1,587.95",1333), dc("$1,587.95",1334)] }),
-            new TableRow({ children: [dc("4",800), dc("$1,480.16",1333), dc("$1,538.20",1333), dc("$1,538.20",1334)] }),
-            new TableRow({ children: [dc("5",800), dc("$1,403.14",1333), dc("$1,447.45",1333), dc("$1,447.45",1334)] }),
-            new TableRow({ children: [dcb("Mean",800), dcb("$1,532.06",1333), dcb("$1,593.49",1333), dcb("$1,593.49",1334)] }),
+            new TableRow({ children: [hc("Algorithm",1380), hc("Cost ($)",900), hc("Std ($)",800), hc("Time (ms)",880), hc("Load Var.",840)] }),
+            new TableRow({ children: [dcb("CODLB",1380), dcb("1,480.95",900), dcb("82.96",800), dcb("29.75",880), dcb("0.00564",840)] }),
+            new TableRow({ children: [dc("Round Robin",1380), dc("1,584.90",900), dc("93.22",800), dc("2.81",880), dc("0.00183",840)] }),
+            new TableRow({ children: [dc("Least Conn.",1380), dc("1,584.90",900), dc("93.22",800), dc("3.39",880), dc("0.00183",840)] }),
+            new TableRow({ children: [dc("Min-Min",1380), dc("1,587.10",900), dc("95.13",800), dc("7.36",880), dc("0.000004",840)] }),
+            new TableRow({ children: [dc("Greedy Cost",1380), dc("1,480.34",900), dc("82.94",800), dc("7.57",880), dc("0.04457",840)] }),
           ]
         }),
         gap(80),
 
-        ssHead("B.  Aggregate Performance Metrics"),
-        bp("Table II consolidates five-trial aggregate statistics. Fig. 1 visualises the distributions through box plots for cost, scheduling time, and load variance, along with a cost-trend line chart across the five trials."),
+        ssHead("B.  Performance Visualisation"),
+        bp("Fig. 2 presents a four-panel performance comparison. Panel (a) shows cost distribution box plots—CODLB's box overlaps the Greedy Cost box (near-identical cost) and sits clearly below RR, LC, and Min-Min boxes. Panel (b) shows load variance—CODLB occupies the middle ground, confirming its Pareto-frontier position. Panel (c) traces per-trial cost across all 30 trials, demonstrating consistent algorithm behaviour across diverse workloads. Panel (d) confirms mean cost with standard deviation error bars."),
 
-        tCap("Table II\nAggregate Performance Metrics (Mean over 5 Trials)"),
+        figImg(P('performance_comparison.png'), 245, 185),
+        figCap("Fig. 2.  Performance comparison across all 5 algorithms over 30 independent trials: (a) cost box plots, (b) load variance, (c) per-trial cost trends, (d) mean cost with standard deviation."),
+
+        ssHead("C.  Cost Analysis"),
+        bp("CODLB achieves a mean total allocation cost of $1,480.95 over 30 trials, compared with $1,584.90 for both RR and LC—a reduction of $103.95 per 1,000 tasks (6.56%). The saving over Min-Min is $106.15 (6.69%). CODLB falls only $0.61 (0.04%) above the Greedy Cost baseline ($1,480.34), demonstrating that the multi-objective fitness function captures nearly the full cost benefit of pure cost minimisation while additionally enforcing load balance. All cost differences are statistically significant at p < 0.0001 (Table II)."),
+        bp("At enterprise scale, a 6.56% cost reduction on 100,000 tasks per month translates to approximately $124,700 in annual savings over Round Robin deployment, without any change to provider contracts or infrastructure commitments."),
+
+        tCap("Table II\nPaired t-Test Results: CODLB vs Each Baseline (30 Trials)"),
         new Table({
           width: { size: 4800, type: WidthType.DXA },
-          columnWidths: [1500, 1100, 1100, 1100],
+          columnWidths: [1400, 900, 900, 900, 700],
           rows: [
-            new TableRow({ children: [hc("Metric",1500), hc("CODLB",1100), hc("RR",1100), hc("LC",1100)] }),
-            new TableRow({ children: [dc("Mean Cost ($)",1500,AlignmentType.LEFT), dc("1,532.06",1100), dc("1,593.49",1100), dc("1,593.49",1100)] }),
-            new TableRow({ children: [dc("Std Dev Cost ($)",1500,AlignmentType.LEFT), dc("94.85",1100), dc("104.44",1100), dc("104.44",1100)] }),
-            new TableRow({ children: [dc("Sched. Time (ms)",1500,AlignmentType.LEFT), dc("12.64",1100), dc("2.29",1100), dc("5.38",1100)] }),
-            new TableRow({ children: [dc("Load Variance",1500,AlignmentType.LEFT), dc("0.0000",1100), dc("0.2222",1100), dc("0.2222",1100)] }),
-            new TableRow({ children: [dc("Cost Saving (%)",1500,AlignmentType.LEFT), dc("3.85%",1100), dc("—",1100), dc("—",1100)] }),
+            new TableRow({ children: [hc("vs Baseline",1400), hc("t-statistic",900), hc("p-value",900), hc("Saving (%)",900), hc("Signif.",700)] }),
+            new TableRow({ children: [dc("Round Robin",1400), dc("45.58",900), dc("< 0.0001",900), dc("+6.56%",900), dc("Yes",700)] }),
+            new TableRow({ children: [dc("Least Conn.",1400), dc("45.58",900), dc("< 0.0001",900), dc("+6.56%",900), dc("Yes",700)] }),
+            new TableRow({ children: [dc("Min-Min",1400), dc("40.81",900), dc("< 0.0001",900), dc("+6.69%",900), dc("Yes",700)] }),
+            new TableRow({ children: [dc("Greedy Cost",1400), dc("15.66",900), dc("< 0.0001",900), dc("-0.04%",900), dc("Yes*",700)] }),
+          ]
+        }),
+        new Paragraph({ spacing: { before: 40, after: 80 }, indent: { firstLine: 0 },
+          children: [new TextRun({ text: "* CODLB is marginally more expensive than Greedy Cost but achieves 87.3% lower load variance.", ...T(16, { italics: true }) })] }),
+
+        ssHead("D.  Load Balance Analysis"),
+        bp("Fig. 3 shows the per-provider resource utilisation and task allocation distribution. CODLB's load variance of 0.00564 situates it between Greedy Cost (0.04457, worst) and Min-Min (0.000004, best). Compared with Greedy Cost, CODLB's load variance is 87.3% lower—a critical advantage, since Greedy Cost routes approximately 85% of tasks to GCP (cheapest for CPU and memory), creating a severe utilisation imbalance that increases the risk of capacity ceiling events and elevated tail latency."),
+        bp("Compared with RR and LC (load variance 0.00183), CODLB's load variance is 3.1x higher, reflecting the intentional 6.56% cost trade-off made by the beta = 0.3 weight. This is the Pareto-frontier position of CODLB: materially cheaper than RR/LC, materially more balanced than Greedy Cost."),
+
+        figImg(P('load_distribution.png'), 245, 110),
+        figCap("Fig. 3.  Per-provider resource utilisation (a) and CODLB task allocation share (b) for a representative trial (seed 999). CODLB distributes load more evenly than Greedy Cost while preferring cost-efficient GCP."),
+
+        ssHead("E.  Cost Breakdown by Provider"),
+        bp("Fig. 4 decomposes CODLB's allocation cost by provider and resource type. GCP receives the largest allocation share (approximately 41%) owing to its lower CPU and memory rates, while Azure receives a comparable share for network-egress-intensive tasks where Azure's $0.087/GB rate undercuts GCP's $0.120/GB. AWS occupies an intermediate position. The CPU and storage resource dimensions contribute the dominant cost fractions, consistent with the Pareto-distributed CPU demands in our workload."),
+
+        figImg(P('cost_breakdown.png'), 245, 110),
+        figCap("Fig. 4.  CODLB cost breakdown: (a) total cost per provider; (b) cost by resource type (CPU, memory, storage, network) per provider."),
+
+        ssHead("F.  Statistical Significance"),
+        bp("Fig. 5 visualises the paired t-test results and cost savings. All p-values fall far below the 0.05 significance threshold, confirming that CODLB's cost advantage is not attributable to random variation across the 30 trials. The Greedy Cost comparison (p < 0.0001 but negative saving of -0.04%) is noteworthy: CODLB is statistically distinguishable from Greedy Cost in cost, yet the practical difference ($0.61 per 1,000 tasks) is negligible. The load-variance difference (0.00564 vs 0.04457), by contrast, is operationally significant."),
+
+        figImg(P('fig4_statistical.png'), 245, 115),
+        figCap("Fig. 5.  Statistical significance analysis: (a) paired t-test p-values for CODLB vs each baseline (dashed line = 0.05 threshold); (b) CODLB cost savings percentage per baseline."),
+
+        ssHead("G.  Weight Sensitivity Analysis"),
+        bp("Table III and Fig. 6 present results across four weight configurations. The proposed configuration (alpha=0.4, beta=0.3, gamma=0.2, delta=0.1) achieves the best balance: lower mean cost than the load-heavy and priority-heavy variants, and lower load variance than the cost-heavy variant. The cost-heavy variant (alpha=0.6) approaches Greedy Cost behaviour, marginally reducing cost at the expense of elevated load variance. The load-heavy variant (beta=0.5) equalises utilisation at the cost of higher expenditure, moving toward RR/LC behaviour. These results confirm that the proposed weight configuration is not arbitrary but represents a principled operating point on the cost-vs-load-balance trade-off surface."),
+
+        figImg(P('fig5_sensitivity.png'), 245, 110),
+        figCap("Fig. 6.  Weight sensitivity analysis: (a) mean cost and (b) mean load variance across four CODLB weight configurations (10 trials each)."),
+
+        tCap("Table III\nCODLB Weight Sensitivity (Mean over 10 Trials)"),
+        new Table({
+          width: { size: 4800, type: WidthType.DXA },
+          columnWidths: [1800, 1500, 1500],
+          rows: [
+            new TableRow({ children: [hc("Configuration",1800), hc("Mean Cost ($)",1500), hc("Load Variance",1500)] }),
+            new TableRow({ children: [dcb("Proposed (alpha=0.4)",1800), dcb("~1,481",1500), dcb("~0.0056",1500)] }),
+            new TableRow({ children: [dc("Cost-heavy (alpha=0.6)",1800), dc("~1,480",1500), dc("~0.0180",1500)] }),
+            new TableRow({ children: [dc("Load-heavy (beta=0.5)",1800), dc("~1,525",1500), dc("~0.0028",1500)] }),
+            new TableRow({ children: [dc("Priority-heavy (gamma=0.3)",1800), dc("~1,505",1500), dc("~0.0070",1500)] }),
           ]
         }),
         gap(80),
 
-        // ── Figure 1: Performance Comparison ──
-        figImg(IMG_PERF, 245, 185),
-        figCap("Fig. 1.  Performance comparison: (a) cost distribution box plots, (b) scheduling time, (c) load variance, and (d) per-trial cost trend across five experimental runs."),
+        ssHead("H.  Scheduling Throughput"),
+        bp("CODLB completes scheduling of 1,000 tasks in a mean of 29.75 ms, corresponding to approximately 33,600 decisions per second. The higher latency relative to RR (2.81 ms) and LC (3.39 ms) reflects the per-provider cost computation and min-max normalisation step in each fitness evaluation. At 33,600 decisions per second, CODLB easily satisfies the scheduling throughput requirements of typical enterprise cloud deployments. For scenarios demanding sub-millisecond response, a pre-computed cost-table variant can reduce per-decision overhead to O(1)."),
 
-        ssHead("C.  Cost Reduction Analysis"),
-        bp("CODLB achieves a mean total allocation cost of $1,532.06, a reduction of $61.43 (3.85%) relative to both baselines at $1,593.49. The advantage is present in every individual trial (Table I), confirming systematic benefit rather than statistical artefact. CODLB's trial-to-trial standard deviation ($94.85) is slightly lower than the baselines' ($104.44), indicating marginally more consistent behaviour across diverse workload samples."),
-        bp("The saving arises from CODLB's deliberate routing of compute- and memory-intensive tasks toward GCP—which offers the lowest per-unit rates for those dimensions—while redistributing network-heavy tasks based on the composite fitness score rather than defaulting to GCP's comparatively high egress price. At enterprise scale, a 3.85% saving on 100,000 tasks per month yields approximately $73,700 in annual cost avoidance, with no changes to provider contracts or infrastructure commitments."),
-
-        ssHead("D.  Load Distribution Analysis"),
-        bp("CODLB attains a load variance of 0.0000 across all trials—denoting perfect equilibrium in resource utilisation across the three providers. RR and LC both register 0.2222. The gap arises from a structural difference in what these algorithms equalise: RR and LC equalise task count, which produces unequal resource utilisation because tasks in a power-law workload differ by orders of magnitude in their CPU and memory demands. CODLB incorporates real-time normalised resource utilisation into the fitness function, routing heavyweight tasks away from already-loaded providers and naturally equalising actual consumption. Fig. 2 visualises the per-provider load distribution across all five trials."),
-
-        // ── Figure 2: Load Distribution ──
-        figImg(IMG_LOAD, 245, 135),
-        figCap("Fig. 2.  Per-provider resource utilisation distribution across five trials. CODLB (left) achieves near-uniform distribution; RR and LC (centre/right) exhibit uneven loading due to task-count-based assignment."),
-
-        ssHead("E.  Scheduling Throughput Analysis"),
-        bp("CODLB completes scheduling of 1,000 tasks in a mean of 12.64 ms, equivalent to approximately 79,100 decisions per second. RR and LC complete the same batch in 2.29 ms and 5.38 ms respectively. The 5.5× latency overhead relative to RR reflects the additional arithmetic in the four-term fitness computation. At 12.64 ms per 1,000 tasks, however, CODLB can process approximately 6.84 billion tasks per day—far exceeding enterprise cloud scheduling rates. The millisecond-scale overhead is therefore negligible in all but the most extreme high-frequency injection scenarios."),
-
-        ssHead("F.  Cost Breakdown by Provider"),
-        bp("Analysis of per-provider allocation fractions reveals that CODLB routes approximately 38% of tasks to GCP, 31% to AWS, and 31% to Azure. This asymmetric but load-balanced distribution reflects GCP's pricing advantage on compute and memory dimensions dominant in the Pareto-distributed workload. The load component in the fitness function prevents monopolistic allocation to GCP: as GCP's utilisation rises, the β·Load(Pᵢ) penalty begins offsetting the cost advantage, redistributing tasks to AWS and Azure. Fig. 3 visualises the cost contribution breakdown per provider, confirming that CODLB captures the GCP cost advantage while maintaining provider balance."),
-
-        // ── Figure 3: Cost Breakdown ──
-        figImg(IMG_COST, 245, 190),
-        figCap("Fig. 3.  Cost breakdown by provider and resource dimension (CPU, memory, storage, network) for the CODLB algorithm. GCP dominates compute allocations while AWS and Azure absorb the residual workload."),
-
-        ssHead("G.  Limitations"),
-        bp("CODLB assumes static pricing rates within a scheduling epoch. Real-world cloud markets offer spot and preemptible instance types with dynamically fluctuating rates; integrating live pricing feeds would extend practical applicability at the cost of external API dependency. The fitness weights (α, β, γ, δ) are set empirically; a principled weight-selection methodology informed by organisational priorities and derived through online learning remains an open direction."),
+        ssHead("I.  Limitations"),
+        bp("CODLB assumes static provider pricing within a scheduling epoch. Dynamic spot-instance pricing, which can change on timescales of seconds to minutes, is not modelled. The fitness weights are set empirically; although the sensitivity analysis validates the proposed configuration, a principled automated weight-tuning method remains an open direction. Finally, the evaluation uses synthetic workloads calibrated to the Google Cluster Trace rather than live production traffic."),
         gap(),
 
-        // ═══════════════════════════════════════════════════════════════════
         // VII. CONCLUSION
-        // ═══════════════════════════════════════════════════════════════════
         sHead("VII.  Conclusion"),
-        bp("This paper presented the Cost-Optimised Dynamic Load Balancer (CODLB), a real-time scheduling algorithm for heterogeneous multi-cloud environments that selects a cloud provider for each incoming task by minimising a weighted four-objective fitness function encoding monetary cost, real-time provider load, task urgency, and response latency. CODLB was implemented in Python 3.12 and validated across five independent experimental trials on 1,000-task workloads generated from power-law distributions derived from the Google Cluster Trace, using real 2024 pricing for AWS, Azure, and GCP."),
-        bp("Experimental results establish three key findings. First, CODLB reduces mean total allocation cost by 3.85% relative to Round Robin and Least Connection baselines ($1,532.06 versus $1,593.49), with the advantage present in every individual trial. Second, CODLB achieves perfect load balance (variance = 0.0000 versus 0.2222), arising from its use of real-time normalised resource utilisation rather than task count as the load proxy. Third, CODLB sustains throughput of approximately 79,100 decisions per second, confirming practical viability for real-time cloud environments. Performance metrics, tabulated results, and graphical visualisations (Figs. 1–3) collectively validate that embedding monetary cost as a primary scheduling criterion within a compact, greedy, training-free algorithm yields simultaneous improvements in financial efficiency and workload equilibrium."),
-        bp("Three directions for future research are identified: (i) integration of dynamic spot-instance pricing to capture time-varying rate differentials; (ii) automated fitness-weight adaptation through lightweight online learning to self-tune the cost–load–priority–latency trade-off; and (iii) embedding CODLB as a scheduling plugin within Kubernetes to enable automated multi-cloud container placement at production scale."),
+        bp("This paper presented CODLB, a Cost-Optimised Dynamic Load Balancer for heterogeneous multi-cloud environments that selects a provider for each incoming task by minimising a rigorously normalised four-term fitness function encoding monetary cost, real-time provider load, task urgency, and response latency. A key methodological contribution is the rigorous [0, 1] normalisation of all four fitness terms, eliminating the scale-dominance flaw present in prior multi-objective formulations."),
+        bp("Evaluated across 30 independent trials on 1,000-task workloads calibrated to Google Cluster Trace distributions with 2024 provider pricing for AWS, Azure, and GCP, CODLB achieves three findings simultaneously: (i) 6.56% cost reduction over Round Robin and Least Connection baselines (p < 0.0001); (ii) cost within 0.04% of the theoretical Greedy Cost minimum; and (iii) 87.3% lower load variance than Greedy Cost. These results confirm that CODLB occupies the Pareto frontier between cost efficiency and load balance—an operating point unavailable to any single-objective scheduler."),
+        bp("Future research will pursue three directions: (i) integration of dynamic spot-instance pricing feeds; (ii) automated weight adaptation through online learning; and (iii) deployment as a Kubernetes scheduling plugin for production multi-cloud container placement."),
         gap(),
 
-        // ═══════════════════════════════════════════════════════════════════
         // REFERENCES
-        // ═══════════════════════════════════════════════════════════════════
         sHead("References"),
-        ref("[1]  M. Armbrust, A. Fox, R. Griffith, A. D. Joseph, R. Katz, A. Konwinski, G. Lee, D. Patterson, A. Rabkin, I. Stoica, and M. Zaharia, “A view of cloud computing,” Communications of the ACM, vol. 53, no. 4, pp. 50–58, Apr. 2010."),
-        ref("[2]  R. Buyya, C. S. Yeo, S. Venugopal, J. Broberg, and I. Brandic, “Cloud computing and emerging IT platforms: Vision, hype, and reality for delivering computing as the 5th utility,” Future Generation Computer Systems, vol. 25, no. 6, pp. 599–616, Jun. 2009."),
-        ref("[3]  P. Mell and T. Grance, “The NIST definition of cloud computing,” NIST, Gaithersburg, MD, USA, Special Publication 800-145, Sep. 2011."),
-        ref("[4]  C. Reiss, J. Wilkes, and J. L. Hellerstein, “Google cluster-usage traces: format + schema,” Google Inc., White Paper, Nov. 2011. [Online]. Available: https://github.com/google/cluster-data"),
-        ref("[5]  R. N. Calheiros, R. Ranjan, A. Beloglazov, C. A. F. De Rose, and R. Buyya, “CloudSim: a toolkit for modeling and simulation of cloud computing environments and evaluation of resource provisioning algorithms,” Software: Practice and Experience, vol. 41, no. 1, pp. 23–50, Jan. 2011."),
-        ref("[6]  B. Wickremasinghe, R. N. Calheiros, and R. Buyya, “CloudAnalyst: A CloudSim-based visual modeller for analysing cloud computing environments and applications,” in Proc. 24th IEEE Int. Conf. Advanced Information Networking and Applications (AINA), Perth, Australia, 2010, pp. 446–452."),
-        ref("[7]  M. Xu, W. Tian, and R. Buyya, “A survey on load balancing algorithms for virtual machines placement in cloud computing,” Concurrency and Computation: Practice and Experience, vol. 29, no. 12, e4123, Jun. 2017."),
-        ref("[8]  B. Mondal, K. Dasgupta, and P. Dutta, “Load balancing in cloud computing using stochastic hill climbing—a soft computing approach,” Procedia Technology, vol. 4, pp. 783–789, 2012."),
-        ref("[9]  K. Kaur and S. Kinger, “Analysis of load balancing techniques in cloud computing,” International Journal of Computers and Technology, vol. 12, no. 5, pp. 3248–3253, 2014."),
-        ref("[10] S. G. Domanal and G. R. M. Reddy, “Optimal load balancing in cloud computing by efficient utilization of virtual machines,” in Proc. 6th Int. Conf. Communication Systems and Networks (COMSNETS), Bangalore, India, 2014, pp. 1–4."),
-        ref("[11] Q. Zhu and G. Agrawal, “Resource provisioning with budget constraints for adaptive applications in cloud environments,” IEEE Transactions on Services Computing, vol. 8, no. 4, pp. 645–657, Jul.–Aug. 2015."),
-        ref("[12] S. Abrishami, M. Naghibzadeh, and D. H. J. Epema, “Deadline-constrained workflow scheduling algorithms for Infrastructure as a Service Clouds,” Future Generation Computer Systems, vol. 29, no. 1, pp. 158–169, Jan. 2013."),
-        ref("[13] M. A. Rodriguez and R. Buyya, “Deadline based resource provisioning and scheduling algorithm for scientific workflows on clouds,” IEEE Transactions on Cloud Computing, vol. 2, no. 2, pp. 222–235, Apr.–Jun. 2014."),
-        ref("[14] X. Mao and M. Humphrey, “Auto-scaling to minimize cost and violation of service level agreements in cloud computing,” in Proc. SC’11, Seattle, WA, USA, 2011, pp. 1–12."),
-        ref("[15] S. K. Mishra, B. Sahoo, and P. P. Parida, “Load balancing in cloud computing: A big picture,” Journal of King Saud University – Computer and Information Sciences, vol. 32, no. 2, pp. 149–158, Feb. 2020."),
-        ref("[16] L. Cheng, A. Thaeler, and C. Wang, “Multi-objective resource allocation in cloud computing using genetic algorithm,” IEEE Access, vol. 6, pp. 24003–24013, 2018."),
-        ref("[17] M. Mezmaz, N. Melab, Y. Kessaci, Y. C. Lee, E.-G. Talbi, A. Y. Zomaya, and D. Tuyttens, “A parallel bi-objective hybrid metaheuristic for energy-aware scheduling for cloud computing systems,” Journal of Parallel and Distributed Computing, vol. 71, no. 11, pp. 1497–1508, Nov. 2011."),
-        ref("[18] L. Guo, S. Zhao, S. Shen, and C. Jiang, “Task scheduling optimization in cloud computing based on heuristic algorithm,” Journal of Networks, vol. 7, no. 3, pp. 547–553, Mar. 2012."),
-        ref("[19] S. Suresh and R. Varatharajan, “Competent resource provisioning and distribution techniques for cloud computing environment,” Cluster Computing, vol. 22, no. S2, pp. 3203–3210, Apr. 2019."),
-        ref("[20] A. Beloglazov, J. Abawajy, and R. Buyya, “Energy-aware resource allocation heuristics for efficient management of data centers for cloud computing,” Future Generation Computer Systems, vol. 28, no. 5, pp. 755–768, May 2012."),
+        ref("[1]   M. Armbrust et al., \"A view of cloud computing,\" Communications of the ACM, vol. 53, no. 4, pp. 50-58, Apr. 2010."),
+        ref("[2]   R. Buyya et al., \"Cloud computing and emerging IT platforms: Vision, hype, and reality for delivering computing as the 5th utility,\" Future Generation Computer Systems, vol. 25, no. 6, pp. 599-616, Jun. 2009."),
+        ref("[3]   P. Mell and T. Grance, \"The NIST definition of cloud computing,\" NIST Special Publication 800-145, Sep. 2011."),
+        ref("[4]   C. Reiss, J. Wilkes, and J. L. Hellerstein, \"Google cluster-usage traces: format + schema,\" Google Inc., White Paper, Nov. 2011. [Online]. Available: https://github.com/google/cluster-data"),
+        ref("[5]   R. N. Calheiros et al., \"CloudSim: a toolkit for modeling and simulation of cloud computing environments,\" Software: Practice and Experience, vol. 41, no. 1, pp. 23-50, Jan. 2011."),
+        ref("[6]   B. Wickremasinghe, R. N. Calheiros, and R. Buyya, \"CloudAnalyst: A CloudSim-based visual modeller for analysing cloud computing environments,\" in Proc. 24th IEEE AINA, Perth, Australia, 2010, pp. 446-452."),
+        ref("[7]   M. Xu, W. Tian, and R. Buyya, \"A survey on load balancing algorithms for virtual machines placement in cloud computing,\" Concurrency Comput.: Pract. Exper., vol. 29, no. 12, e4123, Jun. 2017."),
+        ref("[8]   B. Mondal, K. Dasgupta, and P. Dutta, \"Load balancing in cloud computing using stochastic hill climbing,\" Procedia Technology, vol. 4, pp. 783-789, 2012."),
+        ref("[9]   K. Kaur and S. Kinger, \"Analysis of load balancing techniques in cloud computing,\" Int. J. Computers and Technology, vol. 12, no. 5, pp. 3248-3253, 2014."),
+        ref("[10]  S. G. Domanal and G. R. M. Reddy, \"Optimal load balancing in cloud computing by efficient utilization of virtual machines,\" in Proc. 6th IEEE COMSNETS, Bangalore, India, 2014, pp. 1-4."),
+        ref("[11]  Q. Zhu and G. Agrawal, \"Resource provisioning with budget constraints for adaptive applications in cloud environments,\" IEEE Trans. Services Comput., vol. 8, no. 4, pp. 645-657, Jul.-Aug. 2015."),
+        ref("[12]  S. Abrishami, M. Naghibzadeh, and D. H. J. Epema, \"Deadline-constrained workflow scheduling algorithms for IaaS Clouds,\" Future Generation Computer Systems, vol. 29, no. 1, pp. 158-169, Jan. 2013."),
+        ref("[13]  M. A. Rodriguez and R. Buyya, \"Deadline based resource provisioning and scheduling algorithm for scientific workflows on clouds,\" IEEE Trans. Cloud Comput., vol. 2, no. 2, pp. 222-235, Apr.-Jun. 2014."),
+        ref("[14]  X. Mao and M. Humphrey, \"Auto-scaling to minimize cost and violation of SLAs in cloud computing,\" in Proc. SC'11, Seattle, WA, USA, 2011, pp. 1-12."),
+        ref("[15]  S. K. Mishra, B. Sahoo, and P. P. Parida, \"Load balancing in cloud computing: A big picture,\" J. King Saud Univ. - Comput. Inf. Sci., vol. 32, no. 2, pp. 149-158, Feb. 2020."),
+        ref("[16]  L. Cheng, A. Thaeler, and C. Wang, \"Multi-objective resource allocation in cloud computing using genetic algorithm,\" IEEE Access, vol. 6, pp. 24003-24013, 2018."),
+        ref("[17]  M. Mezmaz et al., \"A parallel bi-objective hybrid metaheuristic for energy-aware scheduling for cloud computing systems,\" J. Parallel Distrib. Comput., vol. 71, no. 11, pp. 1497-1508, Nov. 2011."),
+        ref("[18]  L. Guo, S. Zhao, S. Shen, and C. Jiang, \"Task scheduling optimization in cloud computing based on heuristic algorithm,\" J. Networks, vol. 7, no. 3, pp. 547-553, Mar. 2012."),
+        ref("[19]  S. Suresh and R. Varatharajan, \"Competent resource provisioning and distribution techniques for cloud computing environment,\" Cluster Computing, vol. 22, no. S2, pp. 3203-3210, Apr. 2019."),
+        ref("[20]  A. Beloglazov, J. Abawajy, and R. Buyya, \"Energy-aware resource allocation heuristics for efficient management of data centers for cloud computing,\" Future Generation Computer Systems, vol. 28, no. 5, pp. 755-768, May 2012."),
       ]
     }
   ]
@@ -460,5 +426,5 @@ const doc = new Document({
 
 Packer.toBuffer(doc).then(buf => {
   fs.writeFileSync('D:/Projects/research-paper/IEEE_Research_Paper_Dynamic_Load_Balancing.docx', buf);
-  console.log('Done — IEEE paper with figures written successfully.');
+  console.log('Paper generated successfully.');
 }).catch(e => { console.error(e); process.exit(1); });

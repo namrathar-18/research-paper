@@ -299,104 +299,208 @@ def save(fig, name):
     print(f"  Saved: {name}")
 
 
-# -- Figure 0: Algorithm flowchart --------------------------------------------─
+# -- Figure 0: Algorithm flowchart --------------------------------------------
 def gen_flowchart():
-    fig, ax = plt.subplots(figsize=(8, 13))
-    ax.set_xlim(0, 10); ax.set_ylim(0, 16)
+    import matplotlib.patches as mpatches
+    from matplotlib.patches import FancyArrowPatch
+
+    fig = plt.figure(figsize=(7.5, 14))
+    ax  = fig.add_axes([0, 0, 1, 1])
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 28)
     ax.axis('off')
+    fig.patch.set_facecolor('white')
 
-    def box(x, y, w, h, text, style='round,pad=0.1', fc='#dbeafe', ec='#1a6faf', fs=10, bold=False):
-        bb = FancyBboxPatch((x - w/2, y - h/2), w, h,
-                            boxstyle=style, facecolor=fc, edgecolor=ec, linewidth=1.5)
-        ax.add_patch(bb)
-        ax.text(x, y, text, ha='center', va='center', fontsize=fs,
-                fontweight='bold' if bold else 'normal', wrap=True,
-                multialignment='center')
+    CX = 5.0          # centre-x for the main spine
+    ARROW_COLOR  = '#1e293b'
+    LOOP_COLOR   = '#6d28d9'
 
-    def arrow(x1, y1, x2, y2):
-        ax.annotate('', xy=(x2, y2), xytext=(x1, y1),
-                    arrowprops=dict(arrowstyle='->', color='#334155', lw=1.5))
+    # ── helpers ──────────────────────────────────────────────────────────────
+    def rect(cx, cy, w, h, label, fc, ec, fs=9.2, bold=False, color='black',
+             style='round,pad=0.08'):
+        patch = FancyBboxPatch((cx - w/2, cy - h/2), w, h,
+                               boxstyle=style, facecolor=fc, edgecolor=ec,
+                               linewidth=1.6, zorder=3)
+        ax.add_patch(patch)
+        ax.text(cx, cy, label, ha='center', va='center', fontsize=fs,
+                fontweight='bold' if bold else 'normal',
+                multialignment='center', color=color, zorder=4,
+                linespacing=1.5)
 
-    def diamond(x, y, w, h, text, fc='#fef9c3', ec='#b45309'):
-        pts = np.array([[x, y+h/2],[x+w/2, y],[x, y-h/2],[x-w/2, y]])
-        poly = plt.Polygon(pts, closed=True, facecolor=fc, edgecolor=ec, linewidth=1.5)
-        ax.add_patch(poly)
-        ax.text(x, y, text, ha='center', va='center', fontsize=9.5,
-                multialignment='center')
+    def diamond(cx, cy, hw, hh, label, fc='#fef9c3', ec='#92400e', fs=9.0):
+        pts = np.array([[cx, cy+hh], [cx+hw, cy],
+                        [cx, cy-hh], [cx-hw, cy]])
+        p = plt.Polygon(pts, closed=True, facecolor=fc, edgecolor=ec,
+                        linewidth=1.6, zorder=3)
+        ax.add_patch(p)
+        ax.text(cx, cy, label, ha='center', va='center', fontsize=fs,
+                multialignment='center', zorder=4, linespacing=1.5)
 
-    # Title
-    ax.text(5, 15.4, 'CODLB Algorithm — Decision Flowchart',
-            ha='center', va='center', fontsize=13, fontweight='bold')
+    def varrow(x, y1, y2, color=ARROW_COLOR):
+        ax.annotate('', xy=(x, y2), xytext=(x, y1),
+                    arrowprops=dict(arrowstyle='->', color=color, lw=1.5),
+                    zorder=5)
 
-    # Nodes
-    box(5, 14.5, 3, 0.65, 'START', style='round,pad=0.15',
-        fc='#166534', ec='#14532d', fs=11, bold=True)
-    ax.texts[-1].set_color('white')
+    def harrow(x1, x2, y, color=ARROW_COLOR):
+        ax.annotate('', xy=(x2, y), xytext=(x1, y),
+                    arrowprops=dict(arrowstyle='->', color=color, lw=1.5),
+                    zorder=5)
 
-    box(5, 13.4, 5.5, 0.7, 'Task Tⱼ arrives at scheduler gateway')
-    box(5, 12.3, 5.5, 0.7, 'Parse resource requirements\n⟨cpu, mem, stor, net, prio, dur⟩')
-    box(5, 11.2, 5.5, 0.7, 'Initialise: best_fitness = ∞,  P* = None')
-    box(5, 10.1, 5.5, 0.7, 'For each provider Pᵢ ∈ {AWS, Azure, GCP}', fc='#ede9fe', ec='#6d28d9')
+    def label(x, y, txt, color='black', fs=8.5, bold=False, ha='center'):
+        ax.text(x, y, txt, ha=ha, va='center', fontsize=fs,
+                color=color, fontweight='bold' if bold else 'normal', zorder=6)
 
-    box(5, 9.0,  5.5, 0.7, 'Compute cost cᵢ = Cost(Tⱼ, Pᵢ)', fc='#fce7f3', ec='#be185d')
-    box(5, 7.9,  5.5, 0.8, 'Min-max normalise:\nCₙᵢ = (cᵢ − min_c) / (max_c − min_c)', fc='#fce7f3', ec='#be185d')
-    box(5, 6.75, 5.5, 0.8, 'Read live load:\nlᵢ = (cpu_usedᵢ/1000 + mem_usedᵢ/2000) / 2', fc='#fce7f3', ec='#be185d')
-    box(5, 5.65, 5.5, 0.8, 'Normalise priority & response time:\nPₙ, RTₙ ∈ [0, 1]', fc='#fce7f3', ec='#be185d')
-    box(5, 4.55, 5.5, 0.8, 'Compute fitness:\nF = 0.4·Cₙᵢ + 0.3·lᵢ + 0.2·Pₙ + 0.1·RTₙ', fc='#fce7f3', ec='#be185d')
+    # ── row y-coordinates (top to bottom) ─────────────────────────────────
+    # Each row is separated by a consistent gap.
+    # Rows: START, arrive, parse, init, [loop-header], compute-cost,
+    #        norm-cost, read-load, norm-prio, fitness, [diamond best?],
+    #        [update-best], [diamond all?], assign, END
+    Y = {}
+    Y['START']       = 27.0
+    Y['arrive']      = 25.4
+    Y['parse']       = 23.7
+    Y['init']        = 22.0
+    Y['loop']        = 20.2    # "For each provider" — dashed-border loop marker
+    Y['cost']        = 18.5
+    Y['normcost']    = 16.7
+    Y['load']        = 14.9
+    Y['normprio']    = 13.1
+    Y['fitness']     = 11.3
+    Y['dbest']       = 9.5     # diamond: F < best?
+    Y['updbest']     = 7.9     # update best_fitness, P*
+    Y['dall']        = 6.3     # diamond: all evaluated?
+    Y['assign']      = 4.5
+    Y['update']      = 2.9
+    Y['END']         = 1.3
 
-    diamond(5, 3.4, 4.2, 0.9, 'F < best_fitness?')
+    BW = 6.2   # box width
+    BH = 1.0   # box height (single-line)
+    BH2= 1.2   # box height (two-line)
+    DH = 1.05  # diamond half-height
+    DW = 3.2   # diamond half-width
 
-    box(8.0, 3.4, 2.2, 0.65, 'Skip provider', fc='#fee2e2', ec='#b91c1c')
+    # ── node drawing ──────────────────────────────────────────────────────
+    # START
+    rect(CX, Y['START'], 2.8, BH, 'START', fc='#134e4a', ec='#0f3d38',
+         fs=10.5, bold=True, color='white', style='round,pad=0.15')
 
-    diamond(5, 2.3, 4.4, 0.9, 'All providers\nevaluated?')
+    # Process boxes (blue)
+    B_FC = '#dbeafe'; B_EC = '#1d4ed8'
+    rect(CX, Y['arrive'],   BW, BH,  'Task T arrives at the multi-cloud scheduler gateway',
+         B_FC, B_EC)
+    rect(CX, Y['parse'],    BW, BH2, 'Parse task attributes\n(cpu, mem, stor, net, priority, duration)',
+         B_FC, B_EC)
+    rect(CX, Y['init'],     BW, BH,  'Initialise:  best_fitness = INF,   P* = None',
+         B_FC, B_EC)
 
-    box(2.0, 2.3, 2.2, 0.65, 'Next Pᵢ', fc='#ede9fe', ec='#6d28d9')
+    # Loop header (purple tint)
+    rect(CX, Y['loop'],     BW, BH,  'For each provider Pi in {AWS, Azure, GCP}',
+         '#ede9fe', '#7c3aed', bold=False)
 
-    box(5, 1.2,  5.5, 0.7, 'Assign task to P* = arg min F\nUpdate P* state vector', fc='#dcfce7', ec='#15803d')
-    box(5, 0.2,  3, 0.65, 'END', style='round,pad=0.15',
-        fc='#166534', ec='#14532d', fs=11, bold=True)
-    ax.texts[-1].set_color('white')
+    # Computation boxes (pink tint) — loop body
+    C_FC = '#fdf2f8'; C_EC = '#9d174d'
+    rect(CX, Y['cost'],     BW, BH,  'Compute raw cost:  c_i = Cost(T, Pi)',
+         C_FC, C_EC)
+    rect(CX, Y['normcost'], BW, BH2, 'Min-max normalise cost:\nC_n = (c_i - min_c) / (max_c - min_c)',
+         C_FC, C_EC)
+    rect(CX, Y['load'],     BW, BH2, 'Read normalised provider load:\nL_i = (cpu_used/1000 + mem_used/2000) / 2',
+         C_FC, C_EC)
+    rect(CX, Y['normprio'], BW, BH2, 'Normalise priority & response time:\nP_n = (1/prio - 0.2)/0.8,   RT_n = dur*(1+L)/48',
+         C_FC, C_EC)
+    rect(CX, Y['fitness'],  BW, BH2, 'Compute fitness score:\nF = 0.4*C_n + 0.3*L_i + 0.2*P_n + 0.1*RT_n',
+         C_FC, C_EC)
 
-    # Arrows
-    arrow(5, 14.17, 5, 13.75)
-    arrow(5, 13.05, 5, 12.65)
-    arrow(5, 11.95, 5, 11.55)
-    arrow(5, 10.75, 5, 10.45)  # to loop header
-    arrow(5,  9.75, 5,  9.35)
-    arrow(5,  8.65, 5,  8.30)
-    arrow(5,  7.50, 5,  7.15)
-    arrow(5,  6.35, 5,  5.99)
-    arrow(5,  5.25, 5,  4.95)
-    arrow(5,  4.15, 5,  3.85)  # to diamond
+    # Decision: F < best_fitness?
+    diamond(CX, Y['dbest'], DW, DH, 'F < best_fitness?')
 
-    # F < best?
-    ax.annotate('Yes', xy=(5, 3.4-.08), xytext=(5, 2.78),
-                arrowprops=dict(arrowstyle='->', color='#166534', lw=1.5),
-                ha='center', fontsize=9, color='#166534', fontweight='bold')
-    arrow(6.9, 3.4, 7.0, 3.4)
-    ax.text(6.95, 3.55, 'No', fontsize=9, color='#b91c1c', fontweight='bold')
-    # skip loops back
-    ax.annotate('', xy=(8, 2.3), xytext=(8, 3.4),
-                arrowprops=dict(arrowstyle='->', color='#334155', lw=1.2,
-                                connectionstyle='arc3,rad=0'))
-    arrow(8, 2.3, 7.2, 2.3)
+    # Update best (green tint)
+    rect(CX, Y['updbest'],  BW, BH,  'Update:  best_fitness = F,   P* = Pi',
+         '#dcfce7', '#15803d')
 
-    # All evaluated?
-    ax.annotate('Yes', xy=(5, 1.55), xytext=(5, 1.88),
-                arrowprops=dict(arrowstyle='->', color='#166534', lw=1.5),
-                ha='center', fontsize=9, color='#166534', fontweight='bold')
-    ax.text(2.0, 2.75, 'No ->', fontsize=9, color='#b91c1c',
-            ha='center', fontweight='bold')
-    # No loops back to for-each
-    ax.annotate('', xy=(2.0, 10.1), xytext=(2.0, 2.3),
-                arrowprops=dict(arrowstyle='->', color='#6d28d9', lw=1.2,
-                                connectionstyle='arc3,rad=0'))
-    arrow(2.0, 10.1, 2.25, 10.1)
-    arrow(3.75, 2.3, 2.7+0.4, 2.3)
+    # Decision: all providers evaluated?
+    diamond(CX, Y['dall'],  DW, DH,  'All providers\nevaluated?')
 
-    arrow(5, 0.55, 5, 0.49)
+    # Final steps
+    rect(CX, Y['assign'],   BW, BH,  'Allocate task to P*  (selected provider)',
+         '#dcfce7', '#15803d')
+    rect(CX, Y['update'],   BW, BH2, 'Update P* resource counters:\ncpu, mem, stor, net, task_count',
+         '#dcfce7', '#15803d')
 
-    fig.tight_layout()
+    # END
+    rect(CX, Y['END'], 2.8, BH, 'END', fc='#134e4a', ec='#0f3d38',
+         fs=10.5, bold=True, color='white', style='round,pad=0.15')
+
+    # ── straight arrows (main spine) ──────────────────────────────────────
+    pairs = [
+        ('START',    'arrive',   BH/2,    BH/2),
+        ('arrive',   'parse',    BH/2,    BH2/2),
+        ('parse',    'init',     BH2/2,   BH/2),
+        ('init',     'loop',     BH/2,    BH/2),
+        ('loop',     'cost',     BH/2,    BH/2),
+        ('cost',     'normcost', BH/2,    BH2/2),
+        ('normcost', 'load',     BH2/2,   BH2/2),
+        ('load',     'normprio', BH2/2,   BH2/2),
+        ('normprio', 'fitness',  BH2/2,   BH2/2),
+        ('fitness',  'dbest',    BH2/2,   DH),
+    ]
+    for a, b, da, db in pairs:
+        varrow(CX, Y[a] - da, Y[b] + db)
+
+    # YES from diamond-best -> update-best
+    varrow(CX, Y['dbest'] - DH, Y['updbest'] + BH/2, color='#166534')
+    label(CX - 0.25, (Y['dbest'] - DH + Y['updbest'] + BH/2)/2, 'Yes',
+          color='#166534', bold=True, ha='right')
+
+    # update-best -> diamond-all
+    varrow(CX, Y['updbest'] - BH/2, Y['dall'] + DH)
+
+    # NO from diamond-best -> right -> down to diamond-all level -> left to diamond-all
+    RX = CX + DW + 0.5    # right rail x
+    ax.annotate('', xy=(RX, Y['dbest']), xytext=(CX + DW, Y['dbest']),
+                arrowprops=dict(arrowstyle='->', color='#b91c1c', lw=1.5), zorder=5)
+    label(CX + DW + 0.18, Y['dbest'] + 0.28, 'No', color='#b91c1c', bold=True, ha='left')
+    # vertical segment down on right rail
+    ax.plot([RX, RX], [Y['dbest'], Y['dall']], color='#b91c1c', lw=1.5, zorder=5)
+    # horizontal back to diamond-all right tip
+    ax.annotate('', xy=(CX + DW, Y['dall']), xytext=(RX, Y['dall']),
+                arrowprops=dict(arrowstyle='->', color='#b91c1c', lw=1.5), zorder=5)
+
+    # YES from diamond-all -> assign
+    varrow(CX, Y['dall'] - DH, Y['assign'] + BH/2, color='#166534')
+    label(CX - 0.25, (Y['dall'] - DH + Y['assign'] + BH/2)/2, 'Yes',
+          color='#166534', bold=True, ha='right')
+
+    # assign -> update-counters -> END
+    varrow(CX, Y['assign'] - BH/2, Y['update'] + BH2/2)
+    varrow(CX, Y['update'] - BH2/2, Y['END'] + BH/2)
+
+    # NO from diamond-all: left -> up to loop-header level -> loop-header
+    LX = CX - DW - 0.5   # left rail x
+    ax.annotate('', xy=(LX, Y['dall']), xytext=(CX - DW, Y['dall']),
+                arrowprops=dict(arrowstyle='->', color=LOOP_COLOR, lw=1.5), zorder=5)
+    label(CX - DW - 0.18, Y['dall'] + 0.28, 'No', color='#b91c1c', bold=True, ha='right')
+    # vertical segment up on left rail
+    ax.plot([LX, LX], [Y['dall'], Y['loop']], color=LOOP_COLOR, lw=1.5, zorder=5)
+    # horizontal right to loop-header left edge
+    ax.annotate('', xy=(CX - BW/2, Y['loop']), xytext=(LX, Y['loop']),
+                arrowprops=dict(arrowstyle='->', color=LOOP_COLOR, lw=1.5), zorder=5)
+
+    # ── legend ────────────────────────────────────────────────────────────
+    legend_items = [
+        mpatches.Patch(facecolor='#dbeafe', edgecolor='#1d4ed8', label='Process step'),
+        mpatches.Patch(facecolor='#ede9fe', edgecolor='#7c3aed', label='Loop control'),
+        mpatches.Patch(facecolor='#fdf2f8', edgecolor='#9d174d', label='Fitness computation'),
+        mpatches.Patch(facecolor='#fef9c3', edgecolor='#92400e', label='Decision'),
+        mpatches.Patch(facecolor='#dcfce7', edgecolor='#15803d', label='Assignment / output'),
+    ]
+    ax.legend(handles=legend_items, loc='lower right', fontsize=7.5,
+              framealpha=0.9, edgecolor='#94a3b8',
+              bbox_to_anchor=(0.99, 0.005))
+
+    # ── title ─────────────────────────────────────────────────────────────
+    ax.text(CX, 27.85, 'CODLB Algorithm — Decision Flowchart',
+            ha='center', va='center', fontsize=12, fontweight='bold')
+
     save(fig, 'fig0_flowchart.png')
 
 
